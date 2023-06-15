@@ -1,2 +1,2 @@
 # dknorrmiller.github.io
-My Website
+Professional page and Portfolio
