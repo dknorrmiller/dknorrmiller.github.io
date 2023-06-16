@@ -11,7 +11,9 @@ height: 212px;
 main {
 margin: 0 auto;
 width: 100%;
-position: relative;
+position: absolute;
+left: 268px;
+
 }
 .links ul li {
 list-style: none;
