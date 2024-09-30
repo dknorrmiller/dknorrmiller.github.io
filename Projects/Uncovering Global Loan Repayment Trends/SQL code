@@ -1,3 +1,14 @@
+--Preview of data
+#Taking a general overview
 SELECT *
 FROM ibrd_historical_loans
 LIMIT 100;
+
+#Counting rows in data - 1351382 rows
+SELECT COUNT(*)
+FROM ibrd_historical_loans;
+
+#Counting different loans - 10269 different loans
+SELECT COUNT(DISTINCT(loan_number))
+FROM ibrd_historical_loans;
+
