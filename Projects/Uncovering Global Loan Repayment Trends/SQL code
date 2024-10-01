@@ -8,7 +8,63 @@ LIMIT 100;
 SELECT COUNT(*)
 FROM ibrd_historical_loans;
 
-#Counting different loans - 10269 different loans
-SELECT COUNT(DISTINCT(loan_number))
+#Counting different loans - 10269 different loans from 154 countries
+SELECT COUNT(DISTINCT(loan_number)), COUNT(DISTINCT(country))
 FROM ibrd_historical_loans;
+
+#Convert column "enc_of_period" from string to date
+UPDATE ibrd_historical_loans
+SET end_of_period = date(substr(end_of_period, 7, 4) || '-' || substr(end_of_period, 1, 2) || '-' || substr(end_of_period, 4, 2));
+
+#Code for CTE, where I can filter by just most recent row
+SELECT 
+	  end_of_period, loan_number, region, country_code, country, loan_status,
+    ROW_NUMBER() OVER(PARTITION BY loan_number ORDER BY end_of_period) AS rn
+FROM ibrd_historical_loans;
+
+#Check data with just 1 row by loan - 10269 different loans and 151 countries (3 names where updated)
+WITH cte AS (
+	SELECT 
+		end_of_period, loan_number, country_code, country, loan_status, Original_Principal_Amount, interest_rate,
+    	ROW_NUMBER() OVER(PARTITION BY loan_number ORDER BY end_of_period) AS rn
+	FROM ibrd_historical_loans)
+SELECT COUNT(*), COUNT(DISTINCT(country))
+FROM cte
+WHERE rn = 1;
+
+#To answer the first question, a calculation of total repaid loans proportion and a repaid proportion by region
+WITH cte AS (
+	SELECT 
+		end_of_period, loan_number, region, country_code, country, loan_status, Original_Principal_Amount, interest_rate,
+    	ROW_NUMBER() OVER(PARTITION BY loan_number ORDER BY end_of_period) AS rn
+	FROM ibrd_historical_loans)
+SELECT region, 
+	ROUND(SUM(CASE WHEN loan_status IN ('Repaid', 'Fully Repaid') THEN 1 ELSE 0 END)*1.0/COUNT(*)*100,2)||'%' AS repaid_proportion
+FROM cte
+WHERE rn = 1
+GROUP BY region
+UNION ALL
+SELECT 'TOTAL REPAID PROPORTION' AS region, ROUND(SUM(CASE WHEN loan_status IN ('Repaid', 'Fully Repaid') THEN 1 ELSE 0 END)*1.0/COUNT(*)*100,2)||'%' AS repaid_proportion
+FROM cte
+WHERE rn = 1;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
