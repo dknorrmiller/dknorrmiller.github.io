@@ -12,9 +12,11 @@ FROM ibrd_historical_loans;
 SELECT COUNT(DISTINCT(loan_number)), COUNT(DISTINCT(country))
 FROM ibrd_historical_loans;
 
-#Convert column "enc_of_period" from string to date
+#Convert some columns from string to date
 UPDATE ibrd_historical_loans
-SET end_of_period = date(substr(end_of_period, 7, 4) || '-' || substr(end_of_period, 1, 2) || '-' || substr(end_of_period, 4, 2));
+SET end_of_period = date(substr(end_of_period, 7, 4) || '-' || substr(end_of_period, 1, 2) || '-' || substr(end_of_period, 4, 2)),
+	Agreement_Signing_Date = date(substr(Agreement_Signing_Date, 7, 4) || '-' || substr(Agreement_Signing_Date, 1, 2) || '-' || substr(Agreement_Signing_Date, 4, 2)),
+	Last_Repayment_Date = date(substr(Last_Repayment_Date, 7, 4) || '-' || substr(Last_Repayment_Date, 1, 2) || '-' || substr(Last_Repayment_Date, 4, 2));
 
 #Code for CTE, where I can filter by just most recent row
 SELECT 
