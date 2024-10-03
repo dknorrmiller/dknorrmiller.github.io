@@ -21,7 +21,7 @@ SET end_of_period = date(substr(end_of_period, 7, 4) || '-' || substr(end_of_per
 #Code for CTE, where I can filter by just most recent row
 SELECT 
 	  end_of_period, loan_number, region, country_code, country, loan_status,
-    ROW_NUMBER() OVER(PARTITION BY loan_number ORDER BY end_of_period) AS rn
+    ROW_NUMBER() OVER(PARTITION BY loan_number ORDER BY end_of_period DESC) AS rn
 FROM ibrd_historical_loans;
 
 #Check data with just 1 row by loan - 10269 different loans and 151 countries (3 names where updated)
