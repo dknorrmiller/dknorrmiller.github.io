@@ -1,0 +1,6 @@
+--Preview of data
+#Taking a general overview
+SELECT *
+FROM ibrd_historical_loans
+LIMIT 100;
+
