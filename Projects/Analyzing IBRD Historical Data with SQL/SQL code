@@ -15,4 +15,55 @@ FROM ibrd_historical_loans;
 --Board_Approval_Date#Convert some columns from string to date
 UPDATE ibrd_historical_loans
 SET end_of_period = date(substr(end_of_period, 7, 4) || '-' || substr(end_of_period, 1, 2) || '-' || substr(end_of_period, 4, 2)),
-	Board_Approval_Date = date(substr(Board_Approval_Date, 7, 4) || '-' || substr(Board_Approval_Date, 1, 2) || '-' || substr(Board_Approval_Date, 4, 2));
+	board_approval_date = date(substr(board_approval_date, 7, 4) || '-' || substr(board_approval_date, 1, 2) || '-' || substr(board_approval_date, 4, 2));
+
+--Code for CTE, where I can filter by just most recent row
+SELECT 
+	end_of_period, loan_number, country, original_principal_amount, disbursed_amount, repaid_to_ibrd, repaid_3rd_party, board_approval_date, 
+	ROW_NUMBER() OVER(PARTITION BY loan_number ORDER BY end_of_period DESC) AS rn
+FROM ibrd_historical_loans;
+
+--Check data with just 1 row by loan - 10269 different loans and 151 countries (3 names where updated)
+WITH cte AS(
+	SELECT 
+		end_of_period, loan_number, country, original_principal_amount, disbursed_amount, repaid_to_ibrd, repaid_3rd_party, board_approval_date, 
+		ROW_NUMBER() OVER(PARTITION BY loan_number ORDER BY end_of_period DESC) AS rn
+	FROM ibrd_historical_loans)
+SELECT COUNT(*), COUNT(DISTINCT(country))
+FROM cte
+WHERE rn = 1;
+
+-What is the total amount of loans approved by IBRD over the decades?
+--Query to group approvals by decade 
+WITH cte AS(
+	SELECT 
+		end_of_period, loan_number, country, original_principal_amount, disbursed_amount, repaid_to_ibrd, repaid_3rd_party, board_approval_date, 
+		ROW_NUMBER() OVER(PARTITION BY loan_number ORDER BY end_of_period DESC) AS rn
+	FROM ibrd_historical_loans)
+SELECT STRFTIME('%Y', board_approval_date)/10*10 AS decade, CAST(SUM(original_principal_amount)/1000000 AS INTEGER) AS 'approved_amount(millions)'
+FROM cte
+WHERE rn = 1
+	AND decade IS NOT NULL
+GROUP BY decade;
+
+-What is the average loan amount, and how has it changed over time?
+--Query to calculate average loan approved in each year
+WITH cte AS(
+	SELECT 
+		end_of_period, loan_number, country, original_principal_amount, disbursed_amount, repaid_to_ibrd, repaid_3rd_party, board_approval_date, 
+		ROW_NUMBER() OVER(PARTITION BY loan_number ORDER BY end_of_period DESC) AS rn
+	FROM ibrd_historical_loans)
+SELECT STRFTIME('%Y', board_approval_date) AS 'year', AVG(original_principal_amount)/1000 AS avg_loan
+FROM cte
+WHERE rn = 1
+GROUP BY 1;
+
+
+
+
+
+
+
+
+
+
