@@ -1,6 +1,18 @@
---Preview of data
-#Taking a general overview
+-Preview of data
+--Taking a general overview
 SELECT *
 FROM ibrd_historical_loans
 LIMIT 100;
 
+--Counting rows in data - 1351382 rows
+SELECT COUNT(*)
+FROM ibrd_historical_loans;
+
+--Counting different loans - 10269 different loans from 154 countries
+SELECT COUNT(DISTINCT(loan_number)), COUNT(DISTINCT(country))
+FROM ibrd_historical_loans;
+
+--Board_Approval_Date#Convert some columns from string to date
+UPDATE ibrd_historical_loans
+SET end_of_period = date(substr(end_of_period, 7, 4) || '-' || substr(end_of_period, 1, 2) || '-' || substr(end_of_period, 4, 2)),
+	Board_Approval_Date = date(substr(Board_Approval_Date, 7, 4) || '-' || substr(Board_Approval_Date, 1, 2) || '-' || substr(Board_Approval_Date, 4, 2));
