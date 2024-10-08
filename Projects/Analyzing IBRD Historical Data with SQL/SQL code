@@ -53,17 +53,39 @@ WITH cte AS(
 		end_of_period, loan_number, country, original_principal_amount, disbursed_amount, repaid_to_ibrd, repaid_3rd_party, board_approval_date, 
 		ROW_NUMBER() OVER(PARTITION BY loan_number ORDER BY end_of_period DESC) AS rn
 	FROM ibrd_historical_loans)
-SELECT STRFTIME('%Y', board_approval_date) AS 'year', AVG(original_principal_amount)/1000 AS avg_loan
+SELECT STRFTIME('%Y', board_approval_date) AS 'year', AVG(original_principal_amount)/1000000 AS 'average_by_loan(millions)'
 FROM cte
 WHERE rn = 1
+	AND board_approval_date IS NOT NULL
 GROUP BY 1;
 
+-Which 10 countries have the highest total disbursed amounts by IBRD?
+--Query to get top 10 borrowing countries
+WITH cte AS(
+	SELECT 
+		end_of_period, loan_number, country, original_principal_amount, disbursed_amount, repaid_to_ibrd, repaid_3rd_party, board_approval_date, 
+		ROW_NUMBER() OVER(PARTITION BY loan_number ORDER BY end_of_period DESC) AS rn
+	FROM ibrd_historical_loans)
+SELECT 
+	RANK() OVER(ORDER BY SUM(disbursed_amount) DESC) AS rank,
+	country, CAST(SUM(disbursed_amount)/1000000 AS INTEGER) AS 'total_disbursed(millions)'
+FROM cte
+WHERE rn = 1
+GROUP BY country
+LIMIT 10;
 
-
-
-
-
-
-
-
+-Of the 10 countries with the highest total disbursed amounts by IBRD, which have repaid the most?
+--Using a subquery to get the top payers among the top borrowing countries
+WITH cte AS(
+	SELECT 
+		end_of_period, loan_number, country, original_principal_amount, disbursed_amount, repaid_to_ibrd, repaid_3rd_party, board_approval_date, 
+		ROW_NUMBER() OVER(PARTITION BY loan_number ORDER BY end_of_period DESC) AS rn
+	FROM ibrd_historical_loans)
+SELECT 
+	RANK() OVER(ORDER BY total_repaid/total_disbursed DESC) AS rank, country, 
+	CAST(total_disbursed/1000000 AS INTEGER) AS 'total_disbursed(millions)', 
+	CAST(total_repaid/1000000 AS INTEGER) 'total_repaid(millions)', 
+	ROUND(total_repaid/total_disbursed*100, 2)||'%' AS repaid_proportion
+FROM (SELECT country, SUM(disbursed_amount) AS total_disbursed, SUM(repaid_to_ibrd+repaid_3rd_party)  AS total_repaid 
+	FROM cte WHERE rn = 1 GROUP BY country ORDER BY 2 DESC LIMIT 10);
 
